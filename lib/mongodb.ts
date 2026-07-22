@@ -1,4 +1,12 @@
 import { MongoClient, MongoClientOptions } from "mongodb";
+import dns from "dns";
+
+// Fallback DNS resolution to Google/Cloudflare DNS to fix Windows/ISP querySrv ECONNREFUSED issues with MongoDB Atlas
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore if custom DNS fails to set
+}
 
 const options: MongoClientOptions = {
   serverSelectionTimeoutMS: 5000, // Timeout quickly if MongoDB is unreachable

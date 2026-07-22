@@ -1,6 +1,13 @@
 import { MongoClient } from "mongodb";
 import * as fs from "fs";
 import * as path from "path";
+import dns from "dns";
+
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore if custom DNS fails
+}
 
 // Simple .env parser to avoid extra external dependencies
 const envPath = path.resolve(process.cwd(), ".env.local");
