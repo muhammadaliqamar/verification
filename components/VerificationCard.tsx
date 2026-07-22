@@ -40,6 +40,22 @@ export default function VerificationCard({ candidate }: Props) {
 
   return (
     <div className="verification-card-wrapper animate-fade-in">
+      {/* Dedicated Print-Only Header */}
+      <div className="print-only-header">
+        <div className="print-header-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/devlogix-logo.svg"
+            alt="DevLogix Logo"
+            className="print-logo-img"
+          />
+        </div>
+        <div className="print-header-info">
+          <span className="print-portal-title">Official Verification Portal</span>
+          <span className="print-portal-url">verify.devlogix.online</span>
+        </div>
+      </div>
+
       {/* Top Status Header */}
       <div className="status-banner status-verified">
         <div className="status-badge">

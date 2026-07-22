@@ -686,10 +686,16 @@
   animation: pulseSubtle 3s ease-in-out infinite;
 }
 
+/* Print-only Header (Hidden on Screen, Visible on Print) */
+.print-only-header {
+  display: none;
+}
+
 /* Print Utilities */
 @media print {
   body {
     background: #ffffff !important;
+    color: #0f172a !important;
   }
   .portal-header, .portal-footer, .no-print {
     display: none !important;
@@ -697,10 +703,52 @@
   .main-content {
     max-width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
+  }
+  .print-only-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.75rem;
+    border-bottom: 2px solid #0f172a;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-header-brand {
+    display: flex;
+    align-items: center;
+  }
+  .print-logo-img {
+    height: 36px;
+    width: auto;
+  }
+  .print-header-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .print-portal-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #047857;
+  }
+  .print-portal-url {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: #475569;
+    margin-top: 0.15rem;
   }
   .verification-card-wrapper {
     box-shadow: none !important;
-    border: 1px solid #000000 !important;
+    border: 1.5px solid #0f172a !important;
+    border-radius: 0.75rem !important;
+  }
+  .status-banner {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
