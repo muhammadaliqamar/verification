@@ -14,6 +14,7 @@ import {
   Check,
   Printer,
   Share2,
+  Scroll,
 } from "lucide-react";
 
 interface Props {
@@ -48,7 +49,9 @@ export default function VerificationCard({ candidate }: Props) {
             <p className="status-subtitle">Official Record Confirmed by Devlogix</p>
           </div>
         </div>
-        <div className="status-pill">Official Document</div>
+        <div className="status-pill font-bold tracking-wide">
+          {candidate.document_type || "Official Document"}
+        </div>
       </div>
 
       {/* Main Certificate Card Content */}
@@ -59,7 +62,9 @@ export default function VerificationCard({ candidate }: Props) {
             <ShieldCheck className="w-10 h-10 text-emerald-600" />
           </div>
           <div>
-            <h2 className="card-title">Certificate & Letter Verification</h2>
+            <h2 className="card-title">
+              {candidate.document_type ? `${candidate.document_type} Verification` : "Certificate & Letter Verification"}
+            </h2>
             <p className="card-subtitle">
               Authenticity verified against Devlogix Records Database
             </p>
@@ -68,8 +73,19 @@ export default function VerificationCard({ candidate }: Props) {
 
         <div className="divider" />
 
-        {/* 5 Required Fields Grid */}
+        {/* Required Fields Grid */}
         <div className="fields-grid">
+          {/* Document Type Highlight */}
+          <div className="field-box col-span-full bg-emerald-50/70 border-emerald-200">
+            <div className="field-header">
+              <Scroll className="w-5 h-5 text-emerald-600" />
+              <span className="field-label text-emerald-800">Document Type</span>
+            </div>
+            <div className="field-value text-lg font-bold text-emerald-900">
+              {candidate.document_type}
+            </div>
+          </div>
+
           {/* 1. Issued To */}
           <div className="field-box field-highlight">
             <div className="field-header">

@@ -63,6 +63,9 @@ function normalizeRecord(row: Record<string, any>) {
   const date = String(findVal("date", "issuancedate", "issuedate", "dateofissuance") || "").trim();
   const signatory_name = String(findVal("signatoryname", "signingauthority", "signatory", "authority") || "").trim();
   const designation = String(findVal("designation", "title", "signatorydesignation", "role") || "").trim();
+  const document_type = String(
+    findVal("documenttype", "doctype", "type", "lettertype", "certificatetype", "document") || "Experience Letter"
+  ).trim();
 
   return {
     token,
@@ -71,6 +74,7 @@ function normalizeRecord(row: Record<string, any>) {
     date,
     signatory_name,
     designation,
+    document_type,
     verify_url: `https://verify.devlogix.online/${token}`,
     created_at: new Date(),
   };

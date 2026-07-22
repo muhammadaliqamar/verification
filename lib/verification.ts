@@ -13,6 +13,7 @@ export interface VerifiedCandidate {
   name: string;
   date: string;
   ref_number: string;
+  document_type: string;
 }
 
 /**
@@ -20,7 +21,7 @@ export interface VerifiedCandidate {
  * 
  * Rules:
  * - Read-only lookup.
- * - Extracts ONLY 5 explicit fields: signatory_name, designation, name, date, ref_number.
+ * - Extracts ONLY public fields: signatory_name, designation, name, date, ref_number, document_type.
  * - NEVER leaks internal fields (_id, token, bcrypt hashes, verify_url, created_at).
  * - Catches any DB error, missing token, or connection timeout and returns `null`
  *   to ensure a uniform generic unverified response for end users.
@@ -58,6 +59,7 @@ export async function getVerifiedDocument(
           name: 1,
           date: 1,
           ref_number: 1,
+          document_type: 1,
         },
       }
     );
@@ -73,6 +75,7 @@ export async function getVerifiedDocument(
       name: String(doc.name || doc.issuedTo || "N/A"),
       date: String(doc.date || doc.issuanceDate || "N/A"),
       ref_number: String(doc.ref_number || doc.refNumber || doc.reference_number || "N/A"),
+      document_type: String(doc.document_type || doc.documentType || doc.doc_type || doc.letter_type || "Official Letter"),
     };
   } catch (error) {
     // Log actual DB or connection error on server side for debugging
