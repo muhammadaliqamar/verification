@@ -46,7 +46,7 @@ export default function VerificationCard({ candidate }: Props) {
           <CheckCircle2 className="w-7 h-7 text-emerald-600 animate-pulse-subtle" />
           <div>
             <span className="status-title text-emerald-700">✅ VERIFIED & AUTHENTIC</span>
-            <p className="status-subtitle">Official Record Confirmed by Devlogix</p>
+            <p className="status-subtitle">Official Record Confirmed by DevLogix</p>
           </div>
         </div>
         <div className="status-pill font-bold tracking-wide">
@@ -66,7 +66,7 @@ export default function VerificationCard({ candidate }: Props) {
               {candidate.document_type ? `${candidate.document_type} Verification` : "Certificate & Letter Verification"}
             </h2>
             <p className="card-subtitle">
-              Authenticity verified against Devlogix Records Database
+              Authenticity verified against DevLogix Records Database
             </p>
           </div>
         </div>

@@ -31,7 +31,7 @@ export default function UnverifiedCard() {
           </h2>
 
           <p className="unverified-description">
-            The verification token provided does not match any official, issued record in the Devlogix Database.
+            The verification token provided does not match any official, issued record in the DevLogix Database.
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export default function UnverifiedCard() {
           </h3>
           <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
             <li>The token in the URL or scanned QR code is incorrect or corrupted.</li>
-            <li>The document has expired, been revoked, or was not officially issued by Devlogix.</li>
+            <li>The document has expired, been revoked, or was not officially issued by DevLogix.</li>
             <li>The URL has been manually altered or truncated.</li>
           </ul>
         </div>

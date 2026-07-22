@@ -14,14 +14,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (candidate) {
     return {
-      title: `Verified: ${candidate.name} (${candidate.ref_number}) | Devlogix Verification`,
-      description: `Official document authentication for ${candidate.name}, issued by ${candidate.signatory_name}. Verified via devlogix.online.`,
+      title: `Verified: ${candidate.name} (${candidate.ref_number}) | DevLogix Verification`,
+      description: `Official document authentication for ${candidate.name}, issued by ${candidate.signatory_name}. Verified via DevLogix.`,
     };
   }
 
   return {
-    title: "Document Not Verified | Devlogix Verification Portal",
-    description: "The requested token could not be authenticated against official Devlogix records.",
+    title: "Document Not Verified | DevLogix Verification Portal",
+    description: "The requested token could not be authenticated against official DevLogix records.",
   };
 }
 

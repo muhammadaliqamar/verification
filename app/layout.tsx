@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ShieldCheck, Lock, ExternalLink } from "lucide-react";
+import { Lock } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -11,10 +12,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Official Verification Portal | Devlogix",
+  title: "Official Verification Portal | DevLogix",
   description:
-    "Verify the authenticity of official letters and certificates issued by Devlogix Online.",
-  keywords: ["Devlogix", "Verification", "Certificate", "Letter Authentication", "verify.devlogix.online"],
+    "Verify the authenticity of official letters and certificates issued by DevLogix Online.",
+  keywords: ["DevLogix", "Verification", "Certificate", "Letter Authentication", "verify.devlogix.online"],
   robots: {
     index: true,
     follow: true,
@@ -34,18 +35,19 @@ export default function RootLayout({
           <header className="portal-header no-print">
             <div className="header-container">
               <Link href="/" className="brand-logo">
-                <div className="brand-badge">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                  <span>DEVLOGIX</span>
-                </div>
-                <span className="brand-name hidden sm:inline-block">
-                  Verification Portal
-                </span>
+                <Image
+                  src="/devlogix-logo.svg"
+                  alt="DevLogix Logo"
+                  width={140}
+                  height={32}
+                  priority
+                  className="header-logo-img"
+                />
               </Link>
 
               <div className="header-security-badge">
                 <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>256-Bit SSL Encrypted Verification</span>
+                <span>Secure Verification</span>
               </div>
             </div>
           </header>
@@ -56,15 +58,18 @@ export default function RootLayout({
           {/* Official Footer with Brand Trust Note */}
           <footer className="portal-footer no-print">
             <div className="footer-content">
-              <div className="footer-brand">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Devlogix Official Authentication System</span>
-              </div>
+              <Image
+                src="/devlogix-logo.svg"
+                alt="DevLogix Logo"
+                width={120}
+                height={28}
+                className="footer-logo-img"
+              />
               <p className="footer-note">
                 Verified via <span className="footer-domain-badge">verify.devlogix.online</span>
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                &copy; {new Date().getFullYear()} Devlogix. All rights reserved. Read-only verification engine.
+                &copy; {new Date().getFullYear()} DevLogix. All rights reserved. Read-only verification engine.
               </p>
             </div>
           </footer>
