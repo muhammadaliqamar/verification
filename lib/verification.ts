@@ -1,4 +1,11 @@
 import { getMongoClient } from "./mongodb";
+import dns from "dns";
+
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore
+}
 
 export interface VerifiedCandidate {
   signatory_name: string;
@@ -32,8 +39,10 @@ export async function getVerifiedDocument(
 
   try {
     const client = await getMongoClient();
-    const dbName = process.env.MONGODB_DB || "devlogix_internships";
-    const collectionName = process.env.MONGODB_COLLECTION || "candidates";
+    const dbName = process.env.MONGODB_DB || "devlogix_verification";
+    const collectionName = process.env.MONGODB_COLLECTION || "letters";
+
+    console.log(`[Verification Query] DB: ${dbName} | Collection: ${collectionName} | Token: ${sanitizedToken}`);
 
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
