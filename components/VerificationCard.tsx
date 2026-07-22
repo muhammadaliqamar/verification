@@ -142,17 +142,6 @@ export default function VerificationCard({ candidate }: Props) {
           </div>
         </div>
 
-        {/* Security Watermark / Trust Notice */}
-        <div className="security-notice">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" /> Tamper-Proof Cryptographic Verification
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            This verification record was retrieved directly from the Devlogix secured database. 
-            No third-party modification or altering of this document is possible.
-          </p>
-        </div>
-
         {/* Actions Bar */}
         <div className="card-actions no-print">
           <button
