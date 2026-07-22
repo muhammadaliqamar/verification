@@ -3,7 +3,7 @@ import dns from "dns";
 import fs from "fs";
 import path from "path";
 
-// Fallback .env.local reader if process.env is not yet populated
+// Fallback .env.local reader for local dev if process.env is not yet populated
 function loadEnvLocal() {
   if (!process.env.MONGODB_URI) {
     try {
@@ -22,22 +22,17 @@ function loadEnvLocal() {
         });
       }
     } catch {
-      // Ignore if file cannot be read
+      // Ignore
     }
   }
 }
 
 loadEnvLocal();
 
-/**
- * Resolves mongodb+srv:// URIs to standard mongodb:// seedlists using 8.8.8.8/1.1.1.1 DNS.
- * This bypasses Windows / Node.js c-ares querySrv ECONNREFUSED issues seamlessly.
- */
-async function resolveMongoUri(uri: string): Promise<string> {
+async function resolveMongoUriFallback(uri: string): Promise<string> {
   if (!uri.startsWith("mongodb+srv://")) {
     return uri;
   }
-
   try {
     const resolver = new dns.promises.Resolver();
     resolver.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -53,7 +48,7 @@ async function resolveMongoUri(uri: string): Promise<string> {
     const queryDelimiter = rest.includes("?") ? "&" : "?";
     return `mongodb://${user}:${pass}@${hostList}${rest}${queryDelimiter}ssl=true`;
   } catch (err) {
-    console.warn("[MongoDB SRV Resolver]: Fallback to default URI", err);
+    console.warn("[MongoDB SRV Fallback Failed]:", err);
     return uri;
   }
 }
@@ -70,23 +65,33 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-/**
- * Returns a connected MongoDB client singleton.
- * Safe for serverless environments and hot-reloading in Next.js development.
- */
 export async function getMongoClient(): Promise<MongoClient> {
   const rawUri = process.env.MONGODB_URI;
 
   if (!rawUri) {
+    console.error("[MongoDB Error]: MONGODB_URI environment variable is missing!");
     throw new Error("MONGODB_URI environment variable is missing.");
   }
 
-  const resolvedUri = await resolveMongoUri(rawUri);
+  // Helper to connect with fallback DNS for local Windows querySrv issues
+  const connectWithFallback = async (uriToUse: string): Promise<MongoClient> => {
+    try {
+      const client = new MongoClient(uriToUse, options);
+      return await client.connect();
+    } catch (err: any) {
+      if (err?.code === "ECONNREFUSED" || err?.message?.includes("querySrv")) {
+        console.log("[MongoDB]: ECONNREFUSED detected, attempting DNS resolver fallback...");
+        const fallbackUri = await resolveMongoUriFallback(uriToUse);
+        const fallbackClient = new MongoClient(fallbackUri, options);
+        return await fallbackClient.connect();
+      }
+      throw err;
+    }
+  };
 
   if (process.env.NODE_ENV === "development") {
     if (!global._mongoClientPromise) {
-      const client = new MongoClient(resolvedUri, options);
-      global._mongoClientPromise = client.connect().catch((err) => {
+      global._mongoClientPromise = connectWithFallback(rawUri).catch((err) => {
         global._mongoClientPromise = undefined;
         throw err;
       });
@@ -94,8 +99,7 @@ export async function getMongoClient(): Promise<MongoClient> {
     return global._mongoClientPromise;
   } else {
     if (!clientPromise) {
-      const client = new MongoClient(resolvedUri, options);
-      clientPromise = client.connect().catch((err) => {
+      clientPromise = connectWithFallback(rawUri).catch((err) => {
         clientPromise = null;
         throw err;
       });
