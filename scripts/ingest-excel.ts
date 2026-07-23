@@ -4,6 +4,7 @@ import * as path from "path";
 import dns from "dns";
 import * as XLSX from "xlsx";
 import crypto from "crypto";
+import QRCode from "qrcode";
 
 try {
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -64,10 +65,17 @@ function normalizeRecord(row: Record<string, any>) {
   const signatory_name = String(findVal("signatoryname", "signingauthority", "signatory", "authority") || "").trim();
   const designation = String(findVal("designation", "title", "signatorydesignation", "role") || "").trim();
   const document_type = String(
-    findVal("documenttype", "doctype", "type", "lettertype", "certificatetype", "document") || "Experience Letter"
+    findVal("documenttype", "doctype", "type", "lettertype", "certificatetype", "document") || "Job Offer Letter"
   ).trim();
   const rawAnnexures = findVal("annexures", "annexure", "annexuresattached", "attachments");
-  const annexures = rawAnnexures ? String(rawAnnexures).trim() : undefined;
+
+  let annexures: string[] | string | undefined = undefined;
+  if (typeof rawAnnexures === "string" && rawAnnexures.trim()) {
+    const splitArr = rawAnnexures.split(/\r?\n|;/).map((s) => s.trim()).filter(Boolean);
+    annexures = splitArr.length > 1 ? splitArr : splitArr[0];
+  } else if (Array.isArray(rawAnnexures)) {
+    annexures = rawAnnexures.map((s) => String(s).trim()).filter(Boolean);
+  }
 
   return {
     token,
@@ -79,63 +87,112 @@ function normalizeRecord(row: Record<string, any>) {
     document_type,
     ...(annexures ? { annexures } : {}),
     verify_url: `https://verify.devlogix.online/${token}`,
-    created_at: new Date(),
+    updated_at: new Date(),
   };
 }
 
 async function ingestExcel(filePath: string) {
   if (!filePath || !fs.existsSync(filePath)) {
-    console.error("Please provide a valid Excel file path.");
+    console.error("❌ Please provide a valid Excel file path.");
     console.log("Usage: npx tsx scripts/ingest-excel.ts <path-to-excel-file.xlsx>");
     process.exit(1);
   }
 
-  console.log(`Reading Excel file: ${filePath}...`);
+  console.log(`\n📂 Reading Excel file: ${filePath}...`);
   const workbook = XLSX.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet);
 
-  console.log(`Parsed ${rawRows.length} rows from Excel sheet '${sheetName}'.`);
+  console.log(`📊 Parsed ${rawRows.length} rows from Excel sheet '${sheetName}'.`);
 
   if (rawRows.length === 0) {
-    console.log("No data rows found in Excel file.");
+    console.log("⚠️ No data rows found in Excel file.");
     process.exit(0);
   }
 
   const records = rawRows.map(normalizeRecord);
 
-  console.log("\nSample parsed record preview:");
-  console.log(records[0]);
-
   const rawUri = process.env.MONGODB_URI || "mongodb://localhost:27017";
   const dbName = process.env.MONGODB_DB || "devlogix_verification";
   const collectionName = process.env.MONGODB_COLLECTION || "letters";
 
-  console.log(`\nConnecting to MongoDB Atlas...`);
+  console.log(`\n🔌 Connecting to MongoDB Atlas...`);
   const uri = await resolveMongoUri(rawUri);
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+
+  const qrOutputDir = path.resolve(process.cwd(), "qr-codes");
+  if (!fs.existsSync(qrOutputDir)) {
+    fs.mkdirSync(qrOutputDir, { recursive: true });
+  }
 
   try {
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
 
-    console.log(`Ingesting ${records.length} records into ${dbName}.${collectionName}...`);
+    console.log(`🚀 Ingesting ${records.length} records into ${dbName}.${collectionName} and generating QR codes...\n`);
 
+    const outputRows: any[] = [];
     let insertedCount = 0;
+
     for (const doc of records) {
+      // Upsert into DB by ref_number if present, else by token
+      const filter = doc.ref_number ? { ref_number: doc.ref_number } : { token: doc.token };
+      
       await collection.updateOne(
-        { token: doc.token },
-        { $set: doc },
+        filter,
+        { $set: doc, $setOnInsert: { created_at: new Date() } },
         { upsert: true }
       );
       insertedCount++;
+
+      // File name friendly reference / candidate name
+      const safeRef = (doc.ref_number || doc.token).replace(/[^a-zA-Z0-9_-]/g, "_");
+      const safeName = doc.name.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const qrFileName = `QR_${safeRef}_${safeName}.png`;
+      const qrFilePath = path.join(qrOutputDir, qrFileName);
+
+      // Generate PNG QR Code
+      await QRCode.toFile(qrFilePath, doc.verify_url, {
+        color: { dark: "#000000", light: "#FFFFFF" },
+        width: 400,
+        margin: 2,
+      });
+
+      console.log(`✅ [${insertedCount}/${records.length}] Ingested: ${doc.name} (${doc.ref_number}) -> QR saved: ${qrFileName}`);
+
+      outputRows.push({
+        "Reference Number": doc.ref_number,
+        "Issued To": doc.name,
+        "Issuance Date": doc.date,
+        "Signing Authority": doc.signatory_name,
+        "Designation": doc.designation,
+        "Document Type": doc.document_type,
+        "Annexures": Array.isArray(doc.annexures) ? doc.annexures.join("\n") : doc.annexures || "",
+        "Verification Token": doc.token,
+        "Verification URL": doc.verify_url,
+        "QR Code Path": qrFilePath,
+      });
     }
 
-    console.log(`\n Successfully ingested ${insertedCount} candidate records into MongoDB!`);
+    // Save summary Excel file with generated Tokens, URLs, and QR paths
+    const ext = path.extname(filePath);
+    const base = path.basename(filePath, ext);
+    const outputExcelPath = path.resolve(path.dirname(filePath), `${base}_processed.xlsx`);
+
+    const outSheet = XLSX.utils.json_to_sheet(outputRows);
+    const outWb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(outWb, outSheet, "Processed Records");
+    XLSX.writeFile(outWb, outputExcelPath);
+
+    console.log(`\n======================================================`);
+    console.log(`🎉 SUCCESS: Ingested ${insertedCount} records into MongoDB!`);
+    console.log(`📷 QR Codes saved to  : ${qrOutputDir}`);
+    console.log(`📄 Results Excel saved : ${outputExcelPath}`);
+    console.log(`======================================================\n`);
   } catch (error) {
-    console.error("Ingestion failed:", error);
+    console.error("❌ Ingestion failed:", error);
   } finally {
     await client.close();
   }
@@ -145,6 +202,6 @@ const targetFile = process.argv[2];
 if (targetFile) {
   ingestExcel(targetFile);
 } else {
-  console.log("Ingestion script ready!");
+  console.log("Excel Ingestion Script Ready!");
   console.log("Usage: npx tsx scripts/ingest-excel.ts <path-to-excel-file.xlsx>");
 }
