@@ -66,6 +66,8 @@ function normalizeRecord(row: Record<string, any>) {
   const document_type = String(
     findVal("documenttype", "doctype", "type", "lettertype", "certificatetype", "document") || "Experience Letter"
   ).trim();
+  const rawAnnexures = findVal("annexures", "annexure", "annexuresattached", "attachments");
+  const annexures = rawAnnexures ? String(rawAnnexures).trim() : undefined;
 
   return {
     token,
@@ -75,6 +77,7 @@ function normalizeRecord(row: Record<string, any>) {
     signatory_name,
     designation,
     document_type,
+    ...(annexures ? { annexures } : {}),
     verify_url: `https://verify.devlogix.online/${token}`,
     created_at: new Date(),
   };

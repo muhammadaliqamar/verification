@@ -14,6 +14,7 @@ export interface VerifiedCandidate {
   date: string;
   ref_number: string;
   document_type: string;
+  annexures?: string | string[];
 }
 
 /**
@@ -21,7 +22,7 @@ export interface VerifiedCandidate {
  * 
  * Rules:
  * - Read-only lookup.
- * - Extracts ONLY public fields: signatory_name, designation, name, date, ref_number, document_type.
+ * - Extracts ONLY public fields: signatory_name, designation, name, date, ref_number, document_type, annexures.
  * - NEVER leaks internal fields (_id, token, bcrypt hashes, verify_url, created_at).
  * - Catches any DB error, missing token, or connection timeout and returns `null`
  *   to ensure a uniform generic unverified response for end users.
@@ -60,12 +61,23 @@ export async function getVerifiedDocument(
           date: 1,
           ref_number: 1,
           document_type: 1,
+          annexures: 1,
+          annexure: 1,
         },
       }
     );
 
     if (!doc) {
       return null;
+    }
+
+    let annexures: string | string[] | undefined = undefined;
+    const rawAnnexures = doc.annexures || doc.annexure;
+
+    if (Array.isArray(rawAnnexures)) {
+      annexures = rawAnnexures.map((item: any) => String(item).trim()).filter(Boolean);
+    } else if (typeof rawAnnexures === "string" && rawAnnexures.trim().length > 0) {
+      annexures = rawAnnexures.trim();
     }
 
     // Explicit field extraction with fallback defaults for missing attributes
@@ -76,6 +88,7 @@ export async function getVerifiedDocument(
       date: String(doc.date || doc.issuanceDate || "N/A"),
       ref_number: String(doc.ref_number || doc.refNumber || doc.reference_number || "N/A"),
       document_type: String(doc.document_type || doc.documentType || doc.doc_type || doc.letter_type || "Official Letter"),
+      annexures,
     };
   } catch (error) {
     // Log actual DB or connection error on server side for debugging

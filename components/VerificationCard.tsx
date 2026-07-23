@@ -15,6 +15,7 @@ import {
   Printer,
   Share2,
   Scroll,
+  Paperclip,
 } from "lucide-react";
 
 interface Props {
@@ -23,6 +24,18 @@ interface Props {
 
 export default function VerificationCard({ candidate }: Props) {
   const [copied, setCopied] = useState(false);
+
+  const annexureItems = React.useMemo(() => {
+    if (!candidate.annexures) return [];
+    if (Array.isArray(candidate.annexures)) return candidate.annexures;
+    if (typeof candidate.annexures === "string") {
+      return candidate.annexures
+        .split(/\r?\n|;/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }, [candidate.annexures]);
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -156,6 +169,29 @@ export default function VerificationCard({ candidate }: Props) {
               {candidate.date}
             </div>
           </div>
+
+          {/* 6. Annexures (If attached) */}
+          {annexureItems.length > 0 && (
+            <div className="field-box col-span-full bg-slate-50/90 border-slate-200">
+              <div className="field-header mb-2.5">
+                <Paperclip className="w-5 h-5 text-emerald-600" />
+                <span className="field-label text-slate-700 font-bold">Annexures</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {annexureItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 bg-white px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm font-semibold text-slate-800 shadow-2xs"
+                  >
+                    <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200/80 shrink-0">
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions Bar */}
