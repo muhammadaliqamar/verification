@@ -118,16 +118,16 @@ async function ingestExcel(filePath: string) {
   const collectionName = process.env.MONGODB_COLLECTION || "letters";
 
   console.log(`\n🔌 Connecting to MongoDB Atlas...`);
-  const uri = await resolveMongoUri(rawUri);
-  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+  const { getMongoClient } = await import("../lib/mongodb");
 
   const qrOutputDir = path.resolve(process.cwd(), "qr-codes");
   if (!fs.existsSync(qrOutputDir)) {
     fs.mkdirSync(qrOutputDir, { recursive: true });
   }
 
+  let client: any = null;
   try {
-    await client.connect();
+    client = await getMongoClient();
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
 
